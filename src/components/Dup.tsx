@@ -59,13 +59,15 @@ export function Dup() {
     }
     let id: string="";
     const getNote = async () => {
-        id="";
+        setEvent(iniEvent);
         if(noteId()===""){addDebugLog("noteIDを入力してください");return;}
         if(relayFrom()===""){addDebugLog("relayURLを入力してください");return;}
         clearDebugLogs();
         id = checkNoteId(noteId());
         addDebugLog(`ID: ${id}`);
+        if(id===""){addDebugLog("noteIDを入力してください");return;}
         try {
+            addDebugLog(`Connecting...`);
             const relay = relayInit(relayFrom());
             relay.on('connect', () => {
                 addDebugLog(`Connected to ${relay.url}`);
@@ -93,8 +95,9 @@ export function Dup() {
     }
 
     const dupNote = async () => {
-        if(id===""){ addDebugLog(`Get noteを押してイベントを取得してからからDuplicate noteをクリックしてください`);return;}
+        if(event().sig===""){ addDebugLog(`Get noteを押してイベントを取得してからからDuplicate noteをクリックしてください`);return;}
         if(relayTo()===""){addDebugLog("relayURLを入力してください");return;}
+        addDebugLog(`Connecting...`);
         const ws = new WebSocket(relayTo());
         ws.onopen = () => {
             addDebugLog(`Connected to ${relayTo()}`);
