@@ -67,51 +67,68 @@ export function Dup() {
     }
 
     const dupNote = async () => {
-      
-        try {
-            const relay = relayInit(relayTo());
-            relay.on('connect', () => {
-                addDebugLog(`Connected to ${relay.url}`);
-            });
-            relay.on('error', () => {
-                addDebugLog(`Failed to connect to ${relay.url}`);
-            });
-
-            await relay.connect();
+        const ws = new WebSocket(relayTo());
+        ws.onopen = () => {
+            addDebugLog(`Connected to ${relayTo()}`);
+           
+            ws.send(JSON.stringify(["EVENT",event()]));
+          };
+          ws.onmessage = (e) => {
+            console.log(e);
+            const msg = JSON.parse(e.data);
             
-            try{
-                await relay.publish(event());
-                console.log("ちょっと遅らせてみる");
-                //addDebugLog(`多分成功した`);
+            addDebugLog(`relay message: ${e.data}`);
+            if(msg[2]){
+                addDebugLog("成功しました");
+                
+            }else{
+                addDebugLog("失敗しました");
+            }
+          }
+        // try {
+        //     const relay = relayInit(relayTo());
+        //     relay.on('connect', () => {
+        //         addDebugLog(`Connected to ${relay.url}`);
+        //     });
+        //     relay.on('error', () => {
+        //         addDebugLog(`Failed to connect to ${relay.url}`);
+        //     });
 
-                setTimeout(async () => {
+        //     await relay.connect();
+            
+        //     try{
+        //         await relay.publish(event());
+        //         console.log("ちょっと遅らせてみる");
+        //         //addDebugLog(`多分成功した`);
+
+        //         setTimeout(async () => {
                     
-                    //console.log("ちょっと遅らせてみる");
-                    // ここに遅らせたい処理を記述
-                    let events: Event | null = await relay.get({
-                        ids: [id]
-                    });
+        //             //console.log("ちょっと遅らせてみる");
+        //             // ここに遅らせたい処理を記述
+        //             let events: Event | null = await relay.get({
+        //                 ids: [id]
+        //             });
                     
-                    if (events) {
-                        setEvent(events);
-                        addDebugLog(`完了しました`);
-                        addDebugLog(`Event: ${JSON.stringify(events,null,2)}`);
-                    }else{
-                        addDebugLog(`失敗しました`);
-                    }
-                    relay.close();
+        //             if (events) {
+        //                 setEvent(events);
+        //                 addDebugLog(`完了しました`);
+        //                 addDebugLog(`Event: ${JSON.stringify(events,null,2)}`);
+        //             }else{
+        //                 addDebugLog(`失敗しました`);
+        //             }
+        //             relay.close();
                     
-                }, 500); // 1000ミリ秒（1秒）後に実行
+        //         }, 500); // 1000ミリ秒（1秒）後に実行
 
                 
-            }catch(error){
-                addDebugLog(`失敗しました`);
-                console.log(error);
-            }
+        //     }catch(error){
+        //         addDebugLog(`失敗しました`);
+        //         console.log(error);
+        //     }
            
-        } catch (error) {
-            console.log(error);
-        }
+        // } catch (error) {
+        //     console.log(error);
+        // }
     }
 
     return (
