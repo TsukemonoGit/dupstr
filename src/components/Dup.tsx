@@ -70,28 +70,31 @@ export function Dup() {
         let isSuccess:boolean=false;
         const rxNostr = createRxNostr();
         rxNostr.createConnectionStateObservable().subscribe((ev) => {
-            addDebugLog(ev.from+ev.state);
+            addDebugLog(`${ev.from}: ${ev.state}`);
             console.log(ev.state, ev.from);
+            if(ev.state==="ongoing"){
+                rxNostr
+                .send(event())
+                .subscribe({
+                  next: ({ from }) => {
+                      isSuccess=true;
+                      addDebugLog(`"OK", ${from}`);
+                    console.log("OK", from);
+                  },
+                  complete: () => {
+                      if(!isSuccess){
+                      addDebugLog("failed to Duplicate");}
+                    console.log("Send completed");
+                  },
+                });
+            }
           });
         await rxNostr.switchRelays([
            relayTo()
           ]);
           console.log(relayTo());
           console.log(event());
-          rxNostr
-          .send(event())
-          .subscribe({
-            next: ({ from }) => {
-                isSuccess=true;
-                addDebugLog(`"OK", ${from}`);
-              console.log("OK", from);
-            },
-            complete: () => {
-                if(!isSuccess){
-                addDebugLog("failed to Duplicate");}
-              console.log("Send completed");
-            },
-          });
+         
         // try {
         //     const relay = relayInit(relayTo());
         //     relay.on('connect', () => {
