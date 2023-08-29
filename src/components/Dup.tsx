@@ -1,5 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 import { nip19, relayInit, type Event } from 'nostr-tools'
+
 import "./Dup.css";
 
 export function Dup() {
@@ -9,7 +10,25 @@ export function Dup() {
     const [relayTo, setRelayTo] = createSignal("");
     const [event, setEvent] = createSignal(iniEvent);
 
-    const [debugLogs,setDebugLogs]=createSignal<string[]>([]);
+    const [debugLogs, setDebugLogs] = createSignal<string[]>([]);
+
+    // 現在のURLのクエリ文字列を取得
+    const queryString = window.location.search;
+    // クエリ文字列から?を除去してパラメータ部分を取得
+    const queryParamsString = queryString.slice(1);
+    // クエリ文字列をパースしてオブジェクトに変換
+    const queryParams: { [x: string]: string; } = {};
+    queryParamsString.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        queryParams[key] = decodeURIComponent(value);
+    });
+    console.log(queryString);
+    const initialNoteId = queryParams["noteID"] || "";
+    const initialFrom = queryParams["from"] || "";
+    const initialTo = queryParams["to"] || "";
+    setNoteId(initialNoteId);
+    setRelayFrom(initialFrom);
+    setRelayTo(initialTo);
 
     const addDebugLog = (log: string) => {
         setDebugLogs(logs => [...logs, log]);
@@ -18,6 +37,10 @@ export function Dup() {
         setDebugLogs([]);
     };
     const checkNoteId = (id: string) => {
+        if(id.length<10){
+            addDebugLog(`noteIDを確認してください`);
+            return "";
+        }
         if (id.startsWith('nostr:')) {
             id = id.slice(6);
         }
@@ -26,7 +49,7 @@ export function Dup() {
                 return nip19.decode(id).data;
 
             } catch (error) {
-                throw error;
+                return "";
             }
         } else if (id.startsWith('nevent')) {
             return nip19.decode(id).data.id;
@@ -34,8 +57,11 @@ export function Dup() {
             return id;
         }
     }
-    let  id:string; 
+    let id: string="";
     const getNote = async () => {
+        id="";
+        if(noteId()===""){addDebugLog("noteIDを入力してください");return;}
+        if(relayFrom()===""){addDebugLog("relayURLを入力してください");return;}
         clearDebugLogs();
         id = checkNoteId(noteId());
         addDebugLog(`ID: ${id}`);
@@ -55,8 +81,8 @@ export function Dup() {
             });
             if (event) {
                 setEvent(event);
-                addDebugLog(`Event: ${JSON.stringify(event,null,2)}`);
-            }else{
+                addDebugLog(`Event: ${JSON.stringify(event, null, 2)}`);
+            } else {
                 addDebugLog(`イベントの取得に失敗しました`);
             }
 
@@ -67,24 +93,26 @@ export function Dup() {
     }
 
     const dupNote = async () => {
+        if(id===""){ addDebugLog(`Get noteを押してイベントを取得してからからDuplicate noteをクリックしてください`);return;}
+        if(relayTo()===""){addDebugLog("relayURLを入力してください");return;}
         const ws = new WebSocket(relayTo());
         ws.onopen = () => {
             addDebugLog(`Connected to ${relayTo()}`);
-           
-            ws.send(JSON.stringify(["EVENT",event()]));
-          };
-          ws.onmessage = (e) => {
+
+            ws.send(JSON.stringify(["EVENT", event()]));
+        };
+        ws.onmessage = (e) => {
             console.log(e);
             const msg = JSON.parse(e.data);
-            
+
             addDebugLog(`relay message: ${e.data}`);
-            if(msg[2]){
+            if (msg[2]) {
                 addDebugLog("成功しました");
-                
-            }else{
+
+            } else {
                 addDebugLog("失敗しました");
             }
-          }
+        }
         // try {
         //     const relay = relayInit(relayTo());
         //     relay.on('connect', () => {
@@ -95,20 +123,20 @@ export function Dup() {
         //     });
 
         //     await relay.connect();
-            
+
         //     try{
         //         await relay.publish(event());
         //         console.log("ちょっと遅らせてみる");
         //         //addDebugLog(`多分成功した`);
 
         //         setTimeout(async () => {
-                    
+
         //             //console.log("ちょっと遅らせてみる");
         //             // ここに遅らせたい処理を記述
         //             let events: Event | null = await relay.get({
         //                 ids: [id]
         //             });
-                    
+
         //             if (events) {
         //                 setEvent(events);
         //                 addDebugLog(`完了しました`);
@@ -117,15 +145,15 @@ export function Dup() {
         //                 addDebugLog(`失敗しました`);
         //             }
         //             relay.close();
-                    
+
         //         }, 500); // 1000ミリ秒（1秒）後に実行
 
-                
+
         //     }catch(error){
         //         addDebugLog(`失敗しました`);
         //         console.log(error);
         //     }
-           
+
         // } catch (error) {
         //     console.log(error);
         // }
@@ -153,16 +181,16 @@ export function Dup() {
                 }} />
                 <button type="button" onClick={dupNote}>Duplicate note</button>
             </div>
-           
+
             <For each={debugLogs()}>
-                {(log)=>{
-                    return(
-                       <ul style="margin-left: -1em;">
+                {(log) => {
+                    return (
+                        <ul style="margin-left: -1em;">
                             <li><pre id="log">{log}</pre></li>
-                            </ul>
+                        </ul>
                     )
                 }}
-                </For>
+            </For>
         </div>
     );
 }
