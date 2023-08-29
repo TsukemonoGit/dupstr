@@ -1,6 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 import { nip19, relayInit, type Event } from 'nostr-tools'
-
+import "./Dup.css";
 
 export function Dup() {
     const iniEvent: Event = { kind: 1, tags: [], content: "", created_at: 0, pubkey: "", id: "", sig: "" };
@@ -132,10 +132,10 @@ export function Dup() {
     }
 
     return (
-        <>
+        < div style="padding:1em">
             <div>
                 <label for="noteId">NoteID</label>
-                <input type="text" id="noteId" placeholder="note..." value={noteId()} onInput={(e) => {
+                <input type="text" style="width:20rem" id="noteId" placeholder="note..." value={noteId()} onInput={(e) => {
                     setNoteId(e.currentTarget.value);
                 }} />
             </div>
@@ -153,23 +153,16 @@ export function Dup() {
                 }} />
                 <button type="button" onClick={dupNote}>Duplicate note</button>
             </div>
-            {/* <Show 
-            when={event().sig!==""}
-            fallback={
-                <></>
-            }
-            >
-                <pre>{JSON.stringify(event(), null, 2)}</pre>
-            </Show> */}
+           
             <For each={debugLogs()}>
                 {(log)=>{
                     return(
-                        <li>
-                            <pre>{log}</pre>
-                        </li>
+                       <ul style="margin-left: -1em;">
+                            <li><pre id="log">{log}</pre></li>
+                            </ul>
                     )
                 }}
                 </For>
-        </>
+        </div>
     );
 }

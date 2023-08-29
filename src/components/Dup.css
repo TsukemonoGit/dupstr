@@ -1,0 +1,19 @@
+input{
+  
+    height:1.5rem;
+    margin: 0.5rem;
+    padding: 0.2rem;
+    font-size: medium;
+}
+
+button{
+    height: 2rem;
+    font-size: medium;
+
+}
+
+#log{
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
