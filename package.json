@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "nostr-tools": "^1.14.2",
+    "rx-nostr": "^1.7.4",
     "solid-js": "^1.7.6"
   }
 }

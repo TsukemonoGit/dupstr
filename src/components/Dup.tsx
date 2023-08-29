@@ -1,5 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 import { nip19, relayInit, type Event } from 'nostr-tools'
+import { createRxNostr } from "rx-nostr";
 
 export function Dup() {
     const iniEvent: Event = { kind: 1, tags: [], content: "", created_at: 0, pubkey: "", id: "", sig: "" };
@@ -66,38 +67,63 @@ export function Dup() {
     }
 
     const dupNote = async () => {
-        try {
-            const relay = relayInit(relayTo());
-            relay.on('connect', () => {
-                addDebugLog(`Connected to ${relay.url}`);
-            });
-            relay.on('error', () => {
-                addDebugLog(`Failed to connect to ${relay.url}`);
-            });
+        let isSuccess:boolean=false;
+        const rxNostr = createRxNostr();
+        rxNostr.createConnectionStateObservable().subscribe((ev) => {
+            addDebugLog(ev.from+ev.state);
+            console.log(ev.state, ev.from);
+          });
+        await rxNostr.switchRelays([
+           relayTo()
+          ]);
+          console.log(relayTo());
+          console.log(event());
+          rxNostr
+          .send(event())
+          .subscribe({
+            next: ({ from }) => {
+                isSuccess=true;
+                addDebugLog(`"OK", ${from}`);
+              console.log("OK", from);
+            },
+            complete: () => {
+                if(!isSuccess){
+                addDebugLog("failed to Duplicate");}
+              console.log("Send completed");
+            },
+          });
+        // try {
+        //     const relay = relayInit(relayTo());
+        //     relay.on('connect', () => {
+        //         addDebugLog(`Connected to ${relay.url}`);
+        //     });
+        //     relay.on('error', () => {
+        //         addDebugLog(`Failed to connect to ${relay.url}`);
+        //     });
 
-            await relay.connect();
+        //     await relay.connect();
             
-            try{
-                await relay.publish(event());
-                addDebugLog(`多分成功した`);
-                let events: Event | null = await relay.get({
-                    ids: [id]
-                });
-                if (events) {
-                    setEvent(events);
-                    addDebugLog(`Event: ${JSON.stringify(events,null,2)}`);
-                }else{
-                    addDebugLog(`失敗してたかも`);
-                }
-                relay.close();
-            }catch(error){
-                addDebugLog(`失敗しました`);
-                console.log(error);
-            }
+        //     try{
+        //         await relay.publish(event());
+        //         addDebugLog(`多分成功した`);
+        //         let events: Event | null = await relay.get({
+        //             ids: [id]
+        //         });
+        //         if (events) {
+        //             setEvent(events);
+        //             addDebugLog(`Event: ${JSON.stringify(events,null,2)}`);
+        //         }else{
+        //             addDebugLog(`失敗してたかも`);
+        //         }
+        //         relay.close();
+        //     }catch(error){
+        //         addDebugLog(`失敗しました`);
+        //         console.log(error);
+        //     }
            
-        } catch (error) {
-            console.log(error);
-        }
+        // } catch (error) {
+        //     console.log(error);
+        // }
     }
 
     return (
