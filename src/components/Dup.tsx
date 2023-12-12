@@ -125,8 +125,11 @@ export function Dup() {
     }
 
     return (
+        <>
+        <h3>Duplicate(Broadcasts) a note from relay to relay</h3>
         <div style="padding:1em">
-            <div>
+            
+            <div>         
                 <label for="noteId">NoteID</label>
                 <input type="text" style="width:20rem" id="noteId" placeholder="note..." value={noteId()} onInput={(e) => {
                     setNoteId(e.currentTarget.value);
@@ -144,7 +147,7 @@ export function Dup() {
                 <input type="text" id="to" placeholder="wss://..." value={relayTo()} onInput={(e) => {
                     setRelayTo(e.currentTarget.value);
                 }} />
-                <button type="button" onClick={dupNote}>Duplicate note</button>
+                <button type="button" onClick={dupNote}>Duplicate</button>
             </div>
 
             <For each={debugLogs()}>
@@ -157,5 +160,6 @@ export function Dup() {
                 }}
             </For>
         </div>
+        </>
     );
 }
