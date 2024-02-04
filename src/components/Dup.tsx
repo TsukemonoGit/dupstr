@@ -30,6 +30,7 @@ export function Dup() {
     setRelayFrom(initialFrom);
     setRelayTo(initialTo);
 
+
     const addDebugLog = (log: string) => {
         setDebugLogs(logs => [...logs, log]);
     };
@@ -58,7 +59,10 @@ export function Dup() {
             return id;
         }
     }
+
+    const timeoutDuration = 10000;
     let id: string="";
+    
     const getNote = async () => {
         setEvent(iniEvent);
         if(noteId()===""){addDebugLog("noteIDを入力してください");return;}
@@ -70,10 +74,19 @@ export function Dup() {
         try {
             addDebugLog(`Connecting...`);
             const relay = relayInit(relayFrom());
+
+             // タイムアウト用の処理
+        const connectTimeoutHandler = setTimeout(() => {
+            addDebugLog(`接続がタイムアウトしました`);
+            relay.close(); // タイムアウトした場合は接続を閉じる
+        }, timeoutDuration);
+
             relay.on('connect', () => {
+                clearTimeout(connectTimeoutHandler); // 接続完了したらタイムアウト処理をクリア
                 addDebugLog(`Connected to ${relay.url}`);
             });
             relay.on('error', () => {
+                clearTimeout(connectTimeoutHandler); // 接続完了したらタイムアウト処理をクリア
                 addDebugLog(`Failed to connect to ${relay.url}`);
             });
 
@@ -94,17 +107,33 @@ export function Dup() {
             console.log(error);
         }
     }
-    const timeoutDuration = 2000;
+    
     const dupNote = async () => {
         if(event().sig===""){ addDebugLog(`Get noteを押してイベントを取得してからからDuplicate noteをクリックしてください`);return;}
         if(relayTo()===""){addDebugLog("relayURLを入力してください");return;}
         addDebugLog(`Connecting...`);
         const ws = new WebSocket(relayTo());
+
+         // タイムアウト用の処理
+    const timeoutHandler = setTimeout(() => {
+        addDebugLog(`接続がタイムアウトしました`);
+        ws.close(); // タイムアウトした場合は接続を閉じる
+    }, timeoutDuration);
+
+
         ws.onopen = () => {
+            clearTimeout(timeoutHandler); // 接続完了したらタイムアウト処理をクリア
             addDebugLog(`Connected to ${relayTo()}`);
 
             ws.send(JSON.stringify(["EVENT", event()]));
         };
+        ws.onerror = () => {
+            clearTimeout(timeoutHandler); // 接続完了したらタイムアウト処理をクリア
+            addDebugLog(`Failed to connect to ${relayTo()}`);
+
+            ws.send(JSON.stringify(["EVENT", event()]));
+        };
+
         ws.onmessage = (e) => {
             console.log(e);
             const msg = JSON.parse(e.data);
@@ -118,10 +147,7 @@ export function Dup() {
             }
             ws.close();
         }
-        setTimeout(() => {
-            ws.close();
-          }, timeoutDuration);
-       
+  
     }
 
     return (
