@@ -86,7 +86,7 @@ export function Dup() {
                 addDebugLog(`Connected to ${relay.url}`);
             });
             relay.on('error', () => {
-                clearTimeout(connectTimeoutHandler); // 接続完了したらタイムアウト処理をクリア
+                clearTimeout(connectTimeoutHandler); // タイムアウトクリア
                 addDebugLog(`Failed to connect to ${relay.url}`);
             });
 
@@ -128,10 +128,8 @@ export function Dup() {
             ws.send(JSON.stringify(["EVENT", event()]));
         };
         ws.onerror = () => {
-            clearTimeout(timeoutHandler); // 接続完了したらタイムアウト処理をクリア
+            clearTimeout(timeoutHandler); // タイムアウトクリア
             addDebugLog(`Failed to connect to ${relayTo()}`);
-
-            ws.send(JSON.stringify(["EVENT", event()]));
         };
 
         ws.onmessage = (e) => {
