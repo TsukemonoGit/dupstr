@@ -1,5 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
-import { nip19, relayInit, type Event } from "nostr-tools";
+import { nip19, Relay, type Event } from "nostr-tools";
 
 import "./Dup.css";
 
@@ -87,37 +87,56 @@ export function Dup() {
       return;
     }
     try {
+
+      const relay = await Relay.connect(relayFrom())
       addDebugLog(`Connecting...`);
-      const relay = relayInit(relayFrom());
 
-      // タイムアウト用の処理
-      const connectTimeoutHandler = setTimeout(() => {
-        addDebugLog(`接続がタイムアウトしました`);
-        relay.close(); // タイムアウトした場合は接続を閉じる
-      }, timeoutDuration);
+      const sub = relay.subscribe([
+        {
+          ids: [id],
+        },
+      ], {
+        onevent(event) {
+          console.log('we got the event we wanted:', event)
+          setEvent(event);
+          addDebugLog(`Event: ${JSON.stringify(event, null, 2)}`);
 
-      relay.on("connect", () => {
-        clearTimeout(connectTimeoutHandler); // 接続完了したらタイムアウト処理をクリア
-        addDebugLog(`Connected to ${relay.url}`);
-      });
-      relay.on("error", () => {
-        clearTimeout(connectTimeoutHandler); // タイムアウトクリア
-        addDebugLog(`Failed to connect to ${relay.url}`);
-      });
+        },
+        oneose() {
+          addDebugLog(`end of stored events`);
+          sub.close()
+        },
+      })
 
-      await relay.connect();
 
-      let event: Event | null = await relay.get({
-        ids: [id],
-      });
-      if (event) {
-        setEvent(event);
-        addDebugLog(`Event: ${JSON.stringify(event, null, 2)}`);
-      } else {
-        addDebugLog(`イベントの取得に失敗しました`);
-      }
+      // // タイムアウト用の処理
+      // const connectTimeoutHandler = setTimeout(() => {
+      //   addDebugLog(`接続がタイムアウトしました`);
+      //   relay.close(); // タイムアウトした場合は接続を閉じる
+      // }, timeoutDuration);
 
-      relay.close();
+      // relay.on("connect", () => {
+      //   clearTimeout(connectTimeoutHandler); // 接続完了したらタイムアウト処理をクリア
+      //   addDebugLog(`Connected to ${relay.url}`);
+      // });
+      // relay.on("error", () => {
+      //   clearTimeout(connectTimeoutHandler); // タイムアウトクリア
+      //   addDebugLog(`Failed to connect to ${relay.url}`);
+      // });
+
+      // await relay.connect();
+
+      // let event: Event | null = await relay.get({
+      //   ids: [id],
+      // });
+      // if (event) {
+      //   setEvent(event);
+      //   addDebugLog(`Event: ${JSON.stringify(event, null, 2)}`);
+      // } else {
+      //   addDebugLog(`イベントの取得に失敗しました`);
+      // }
+
+      // relay.close();
     } catch (error) {
       console.log(error);
     }
